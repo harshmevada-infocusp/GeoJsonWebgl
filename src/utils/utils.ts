@@ -41,6 +41,7 @@ export const drawCountryPoints = (
   bounds: Boundaries,
 ) => {
   let verts: number[] = [];
+  // console.log("countryData", countryData);
 
   for (let i = 0; i < countryData.length; i++) {
     const [lng, lat] = countryData[i];
