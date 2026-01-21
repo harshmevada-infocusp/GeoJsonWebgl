@@ -54,7 +54,6 @@ export const drawCountryPoints = (
 
     verts.push(x, y);
   }
-
   const count = verts.length / 2;
 
   // upload polygon vertices

@@ -42,13 +42,17 @@ void main (){
 
   }`;
 
-const simpleCountries: CountryFeature[] = geoJson.features.map((f) => ({
-  type: f.type,
-  properties: {
-    name: f.properties.name,
-  },
-  geometry: f.geometry,
-}));
+const simpleCountries: CountryFeature[] = geoJson.features
+  // .filter((e) =>
+  //   ["United States of America", "India"].includes(e.properties.name),
+  // )
+  .map((f) => ({
+    type: f.type,
+    properties: {
+      name: f.properties.name,
+    },
+    geometry: f.geometry,
+  }));
 
 function main() {
   const canvas = document.getElementById("gl-canvas") as HTMLCanvasElement;
@@ -71,7 +75,6 @@ function main() {
     vertexShaderSource,
     fragmentShaderSource,
   });
-  console.log("program", program);
 
   gl.useProgram(program);
 
@@ -114,15 +117,15 @@ function main() {
       .flat(1) as number[][],
   );
 
-  simpleCountries
-    // .filter((e) => e.name === "India")
-    .map((e) => {
-      drawCountryPoints(
-        gl,
-        e.geometry.coordinates[0] as number[][],
-        dataBounds,
-      );
+  simpleCountries.forEach((e) => {
+    e.geometry.coordinates.forEach((cord) => {
+      if (e.geometry.type === "MultiPolygon") {
+        drawCountryPoints(gl, cord.flat(1) as number[][], dataBounds);
+      } else drawCountryPoints(gl, cord as number[][], dataBounds);
     });
+  });
 }
 
 main();
+
+window.addEventListener("resize", main);
