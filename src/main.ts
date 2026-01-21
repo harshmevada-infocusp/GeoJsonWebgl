@@ -36,12 +36,12 @@ const fragmentShaderSource = `#version 300 es
   in vec3 fColor;
   out vec4 color;
 
-void main (){
+  void main (){
 
   color = vec4(1,0,0.3,1);
 
   }`;
-
+const IS_MOBILE = window.matchMedia("(max-width: 768px)").matches;
 const simpleCountries: CountryFeature[] = geoJson.features
   // .filter((e) =>
   //   ["United States of America", "India"].includes(e.properties.name),
@@ -53,18 +53,23 @@ const simpleCountries: CountryFeature[] = geoJson.features
     },
     geometry: f.geometry,
   }));
-
+const dataBounds = getBounds(
+  simpleCountries
+    .map((country) => country.geometry.coordinates.flat(1))
+    .flat(1) as number[][],
+);
 function main() {
   const canvas = document.getElementById("gl-canvas") as HTMLCanvasElement;
-
+  const canvasWidth = !IS_MOBILE
+    ? document.documentElement.clientWidth
+    : document.documentElement.clientHeight * 2;
   //giving canvas the size of the screen
-  canvas.width = document.documentElement.clientWidth;
+  canvas.width = canvasWidth;
   canvas.height = document.documentElement.clientHeight;
-
   const gl = canvas.getContext("webgl2") as WebGL2RenderingContext;
 
   //setting up viewport of the canvas
-  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+  gl.viewport(0, 0, canvasWidth, document.documentElement.clientHeight);
 
   //converting canvas to black color
   gl.clearColor(0, 0, 0, 1);
@@ -80,7 +85,7 @@ function main() {
 
   //setting up resolution of the webgl context
   var resolutionUniformLocation = gl.getUniformLocation(program, "uResolution");
-  gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
+  gl.uniform2f(resolutionUniformLocation, canvasWidth, canvas.height);
 
   //line color
   const aColorLoc = gl.getAttribLocation(program, "aColor");
@@ -111,21 +116,31 @@ function main() {
 
   //databounds
 
-  const dataBounds = getBounds(
-    simpleCountries
-      .map((country) => country.geometry.coordinates.flat(1))
-      .flat(1) as number[][],
-  );
-
-  simpleCountries.forEach((e) => {
-    e.geometry.coordinates.forEach((cord) => {
-      if (e.geometry.type === "MultiPolygon") {
-        drawCountryPoints(gl, cord.flat(1) as number[][], dataBounds);
-      } else drawCountryPoints(gl, cord as number[][], dataBounds);
+  if (IS_MOBILE) {
+    window.scrollTo({
+      behavior: "instant",
+      left: document.documentElement.clientWidth,
     });
-  });
+  }
+  redraw(gl);
 }
 
 main();
 
 window.addEventListener("resize", main);
+function redraw(gl: WebGL2RenderingContext) {
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  simpleCountries.forEach((e) => {
+    e.geometry.coordinates.forEach((cord) => {
+      if (e.geometry.type === "MultiPolygon") {
+        drawCountryPoints(
+          gl,
+          cord.flat(1) as number[][],
+          dataBounds,
+          IS_MOBILE,
+        );
+      } else drawCountryPoints(gl, cord as number[][], dataBounds, IS_MOBILE);
+    });
+  });
+  // requestAnimationFrame(redraw);
+}

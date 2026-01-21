@@ -20,28 +20,29 @@ export function projectToCanvas(
   lat: number,
   bounds: any,
   canvas: HTMLCanvasElement,
+  IS_MOBILE: boolean,
 ) {
   const { minX, maxX, minY, maxY } = bounds;
-  const padding = 100;
+  const padding = IS_MOBILE ? 150 : 100;
   const scaleX = (canvas.width - padding * 2) / (maxX - minX);
   const scaleY = (canvas.height - padding * 2) / (maxY - minY);
 
   // keep aspect ratio
   const scale = Math.min(scaleX, scaleY);
 
-  const x = padding + (lng - minX) * scale;
+  const x = padding + (lng - maxX - padding / 2) * scale;
   const y = padding + (lat - minY) * scale; // invert because canvas y increases downward
 
-  return [x + canvas.width / 8, canvas.height - y];
+  return [x + canvas.width, canvas.height - y];
 }
 
 export const drawCountryPoints = (
   gl: WebGL2RenderingContext,
   countryData: number[][],
   bounds: Boundaries,
+  IS_MOBILE: boolean,
 ) => {
   let verts: number[] = [];
-  // console.log("countryData", countryData);
 
   for (let i = 0; i < countryData.length; i++) {
     const [lng, lat] = countryData[i];
@@ -51,10 +52,12 @@ export const drawCountryPoints = (
       lat,
       bounds,
       gl.canvas as HTMLCanvasElement,
+      IS_MOBILE,
     );
 
     verts.push(x, y);
   }
+
   const count = verts.length / 2;
 
   // upload polygon vertices
